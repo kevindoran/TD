@@ -25,7 +25,7 @@ def constant(gs, params):
 
 @register("exp")
 def exponential_decay(gs, params, delay=0):
-  gs -= delay
+  gs = gs - delay
   return tf.train.exponential_decay(
       params.learning_rate,
       gs,
@@ -133,7 +133,6 @@ def warmup_exponential_decay(gs, params):
   warmup_steps = params.warmup_steps
   inv_base = tf.exp(tf.log(0.01) / warmup_steps)
   inv_decay = inv_base**(warmup_steps - tf.to_float(gs))
-
   return tf.cond(
       tf.greater(gs,
                  warmup_steps), lambda: exponential_decay(gs, params, delay=d),

@@ -1,6 +1,8 @@
-__all__ = ["defaults", "registry", "resnet", "lenet", "utils", "vgg", "basic"]
+__all__ = ["defaults", "registry", "efficientnet", "resnet", "lenet", "utils",
+           "vgg", "basic"]
 
 from .defaults import *
+from .efficientnet import *
 from .resnet import *
 from .registry import *
 from .user import *

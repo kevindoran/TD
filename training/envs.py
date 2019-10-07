@@ -19,8 +19,8 @@ class GCP(object):
 
 @register
 class TPU(object):
-  data_dir = "/path/to/your/data"
-  output_dir = "/path/to/your/output"
+  data_dir = "gs://micronet_bucket1/imageNet"
+  output_dir = "gs://micronet_bucket1/models/experiments/3/1/3"
 
 
 @register

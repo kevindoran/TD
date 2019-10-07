@@ -125,23 +125,30 @@ def _run(hparams_name):
   """Run training, evaluation and inference."""
   hparams = init_model(hparams_name)
   original_batch_size = hparams.batch_size
-  if tf.gfile.Exists(hparams.output_dir) and FLAGS.fresh:
-    tf.gfile.DeleteRecursively(hparams.output_dir)
+  cloud_storage = hparams.output_dir.startswith('gs://')
+  if not cloud_storage:
+    if tf.gfile.Exists(hparams.output_dir) and FLAGS.fresh:
+      tf.gfile.DeleteRecursively(hparams.output_dir)
 
-  if not tf.gfile.Exists(hparams.output_dir):
-    tf.gfile.MakeDirs(hparams.output_dir)
+    if not tf.gfile.Exists(hparams.output_dir):
+      tf.gfile.MakeDirs(hparams.output_dir)
   model_fn = get_model(hparams)
-  train_input_fn, eval_input_fn, test_input_fn = get_input_fns(hparams)
+  train_input_fn, eval_input_fn, test_input_fn = get_input_fns(hparams,
+                                                               generate=False)
 
   tpu = None
   if hparams.use_tpu:
     cloud.instance.tpu.clean()
-    tpu = cloud.instance.tpu.get(preemptible=not FLAGS.tpu_dedicated)
+    tpu = cloud.instance.tpu.get(preemptible=not FLAGS.tpu_dedicated,
+                                 version='v2-8')
 
   estimator = construct_estimator(model_fn, hparams, tpu)
 
   if not hparams.use_tpu:
-    features, labels = train_input_fn()
+    params = {'batch_size': 64}
+    dataset = train_input_fn(params)
+    iterator = dataset.make_one_shot_iterator()
+    features, labels = iterator.get_next()
     sess = tf.Session()
     tf.train.get_or_create_global_step()
 
@@ -169,7 +176,7 @@ def _run(hparams_name):
     tf.logging.info("Beginning epoch %f / %d" % (k, hparams.train_epochs))
 
     if tpu and not tpu.usable:
-      tpu.delete(async=True)
+      tpu.delete(background=True)
       tpu = cloud.instance.tpu.get(preemptible=not FLAGS.tpu_dedicated)
       estimator = construct_estimator(model_fn, hparams, tpu)
 

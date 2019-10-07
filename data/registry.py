@@ -7,7 +7,6 @@ _GENERATORS = dict()
 
 
 def register(name, generator):
-
   def add_to_dict(fn):
     global _INPUT_FNS
     global _GENERATORS
@@ -19,6 +18,30 @@ def register(name, generator):
 
 
 def get_input_fns(hparams, generate=True):
+  train_path = eval_path = hparams.data_dir
+  test_path = None
+
+  if generate:
+    if not tf.gfile.Exists(hparams.data_dir):
+      tf.gfile.MakeDirs(hparams.data_dir)
+
+    # generate if train doesnt exist
+    maybe_generate(train_path, hparams)
+    maybe_generate(eval_path, hparams)
+    maybe_generate(test_path, hparams)
+
+  input_fn = _INPUT_FNS[hparams.data]
+  train_fn = input_fn(train_path, hparams, training=True)
+  eval_fn = None if not eval_path else input_fn(
+      eval_path, hparams, training=False)
+  test_fn = None if not test_path else input_fn(
+      test_path, hparams, training=False)
+  if not (eval_path or test_path):
+    raise Exception("Could not find eval or test files.")
+  return train_fn, eval_fn, test_fn
+
+
+def get_input_fns_old(hparams, generate=True):
   train_path = os.path.join(hparams.data_dir, "train*")
   eval_path = os.path.join(hparams.data_dir, "eval*")
   test_path = os.path.join(hparams.data_dir, "test*")

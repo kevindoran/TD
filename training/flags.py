@@ -25,9 +25,10 @@ def update_hparams(FLAGS, hparams, hparams_name):
   hparams.use_tpu = hparams.env == "tpu"
   hparams.train_epochs = FLAGS.train_epochs or hparams.train_epochs
   hparams.eval_steps = FLAGS.eval_steps or hparams.eval_steps
+  hparams.tpu_iterations_per_loop = FLAGS.tpu_iterations_per_loop
 
   env = get_env(FLAGS.env)
-  hparams.data_dir = os.path.join(FLAGS.data_dir or env.data_dir, hparams.data)
-  hparams.output_dir = os.path.join(env.output_dir, FLAGS.hparams)
+  hparams.data_dir = FLAGS.data_dir or env.data_dir
+  hparams.output_dir = FLAGS.output_dir or env.output_dir
 
   return hparams
